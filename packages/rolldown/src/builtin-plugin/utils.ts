@@ -34,7 +34,12 @@ export function makeBuiltinPluginCallable(
     const wrappedHook = async function (...args: any[]) {
       try {
         // @ts-expect-error
-        return await callablePlugin[key](...args);
+        const result = await callablePlugin[key](...args);
+        if (key === 'transform' && result?.map) {
+          // The binding returns the map in its `{ inner }` shape; JS callers expect a sourcemap.
+          result.map = result.map.inner;
+        }
+        return result;
       } catch (e: any) {
         if (e instanceof Error && !e.stack?.includes('at ')) {
           Error.captureStackTrace(
